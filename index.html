@@ -1,0 +1,1848 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>简洁钱包前端 - 钱包操作</title>
+
+  <!-- 模块化CSS - 按功能分离 -->
+  <link rel="stylesheet" href="/css/base.css?v=20251201" />
+  <link rel="stylesheet" href="/css/animations.css?v=20251201" />
+  <link rel="stylesheet" href="/css/utilities.css?v=20251201" />
+  <link rel="stylesheet" href="/css/components.css?v=20251201b" />
+  <link rel="stylesheet" href="/css/header.css?v=20251201g" />
+  <link rel="stylesheet" href="/css/welcome.css?v=20251201" />
+  <link rel="stylesheet" href="/css/toast.css?v=20251201" />
+  <link rel="stylesheet" href="/css/entry.css?v=20251201" />
+  <link rel="stylesheet" href="/css/new-user.css?v=20251201" />
+  <link rel="stylesheet" href="/css/login.css?v=20251201" />
+  <link rel="stylesheet" href="/css/wallet.css?v=20251201" />
+  <link rel="stylesheet" href="/css/transaction.css?v=20251201" />
+  <link rel="stylesheet" href="/css/import-wallet.css?v=20251201" />
+  <link rel="stylesheet" href="/css/join-group.css?v=20251201" />
+
+  <!-- 其他样式 -->
+  <link rel="stylesheet" href="/wallet_struct_styles.css?v=2" />
+  <style>
+    /* Ensure detail modal styles are present */
+    .detail-content {
+      max-height: 60vh;
+      overflow-y: auto;
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 24px;
+    }
+
+    .detail-row {
+      display: flex;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 8px;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .detail-label {
+      width: 120px;
+      flex-shrink: 0;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .detail-val {
+      flex: 1;
+      color: #334155;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .detail-sub {
+      margin-top: 4px;
+      background: #fff;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <!-- Logo 区域 -->
+      <div class="header-logo">
+        <div class="logo-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" stroke="url(#logoGrad)" stroke-width="1.5" fill="none" />
+            <path d="M12 6l6 3v6l-6 3-6-3V9l6-3z" fill="url(#logoGrad)" opacity="0.2" />
+            <circle cx="12" cy="12" r="3" fill="url(#logoGrad)" />
+            <defs>
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#0ea5e9" />
+                <stop offset="100%" style="stop-color:#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <span class="logo-text">UTXO Wallet</span>
+      </div>
+
+      <!-- 用户区域 -->
+      <div id="userBar" class="user-bar">
+        <button id="userButton" class="user-button" aria-label="用户信息">
+          <div class="user-avatar" id="userAvatar">
+            <svg class="avatar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <img class="avatar-img hidden" src="/assets/avatar.png" alt="用户头像">
+          </div>
+          <span id="userLabel" class="user-label">未登录</span>
+          <svg class="user-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div id="userMenu" class="user-menu hidden">
+          <!-- 用户信息头部 -->
+          <div class="menu-header">
+            <div class="menu-header-avatar" id="menuHeaderAvatar">
+              <svg class="avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <img class="avatar-img hidden" src="/assets/avatar.png" alt="用户头像">
+            </div>
+            <div class="menu-header-info">
+              <span class="menu-header-title" id="menuHeaderTitle">Amiya</span>
+              <span class="menu-header-sub" id="menuHeaderSub">欢迎回来 👋</span>
+            </div>
+          </div>
+
+          <!-- 信息卡片区 -->
+          <div class="menu-cards">
+            <div class="menu-card" id="menuAccountItem">
+              <div class="menu-card-icon menu-card-icon--blue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <line x1="7" y1="8" x2="17" y2="8" />
+                  <line x1="7" y1="12" x2="13" y2="12" />
+                </svg>
+              </div>
+              <div class="menu-card-content">
+                <span class="menu-card-label">账户 ID</span>
+                <code id="menuAccountId" class="menu-card-value"></code>
+              </div>
+            </div>
+
+            <div class="menu-card menu-card--clickable" id="menuAddressItem">
+              <div class="menu-card-icon menu-card-icon--green">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <div class="menu-card-content">
+                <span class="menu-card-label">地址信息</span>
+                <code id="menuAddress" class="menu-card-value"></code>
+              </div>
+              <svg class="menu-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              <div id="menuAddressPopup" class="menu-popup hidden">
+                <div id="menuAddressList"></div>
+              </div>
+            </div>
+
+            <div class="menu-card hidden" id="menuOrgItem">
+              <div class="menu-card-icon menu-card-icon--purple">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <div class="menu-card-content">
+                <span class="menu-card-label">担保组织</span>
+                <code id="menuOrg" class="menu-card-value"></code>
+              </div>
+            </div>
+
+            <div class="menu-card menu-card--clickable hidden" id="menuBalanceItem">
+              <div class="menu-card-icon menu-card-icon--amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
+                  <path d="M12 18V6" />
+                </svg>
+              </div>
+              <div class="menu-card-content">
+                <span class="menu-card-label">余额</span>
+                <code id="menuBalance" class="menu-card-value"></code>
+              </div>
+              <svg class="menu-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              <div id="menuBalancePopup" class="menu-popup menu-balance-popup hidden">
+                <div class="balance-breakdown">
+                  <div class="balance-item">
+                    <span class="balance-dot balance-dot--pgc"></span>
+                    <span class="balance-label">PGC</span>
+                    <span id="menuBalancePGC" class="balance-amount">0</span>
+                  </div>
+                  <div class="balance-item">
+                    <span class="balance-dot balance-dot--btc"></span>
+                    <span class="balance-label">BTC</span>
+                    <span id="menuBalanceBTC" class="balance-amount">0</span>
+                  </div>
+                  <div class="balance-item">
+                    <span class="balance-dot balance-dot--eth"></span>
+                    <span class="balance-label">ETH</span>
+                    <span id="menuBalanceETH" class="balance-amount">0</span>
+                  </div>
+                </div>
+                <div class="balance-tip">汇率: 1 PGC = 1 USDT, 1 BTC = 100 USDT, 1 ETH = 10 USDT</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 未登录状态 -->
+          <div id="menuEmpty" class="menu-empty hidden">
+            <div class="menu-empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div class="menu-empty-text">尚未登录</div>
+            <div class="menu-empty-hint">请先创建或导入账户</div>
+          </div>
+
+          <!-- 退出按钮 -->
+          <button id="logoutBtn" class="menu-logout-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>退出登录</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- SVG 渐变定义 -->
+    <svg width="0" height="0" style="position:absolute">
+      <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0ea5e9" />
+          <stop offset="100%" style="stop-color:#06b6d4" />
+        </linearGradient>
+        <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#8b5cf6" />
+          <stop offset="100%" style="stop-color:#a78bfa" />
+        </linearGradient>
+        <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f59e0b" />
+          <stop offset="100%" style="stop-color:#fbbf24" />
+        </linearGradient>
+        <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#10b981" />
+          <stop offset="100%" style="stop-color:#34d399" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <!-- 全新现代化首页 -->
+    <section class="welcome-hero" id="welcomeCard">
+      <!-- 动态背景 -->
+      <div class="welcome-bg">
+        <div class="welcome-gradient-orb orb-1"></div>
+        <div class="welcome-gradient-orb orb-2"></div>
+        <div class="welcome-gradient-orb orb-3"></div>
+        <div class="welcome-gradient-orb orb-4"></div>
+        <div class="welcome-grid-pattern"></div>
+      </div>
+
+      <!-- 浮动粒子 -->
+      <div class="welcome-particles">
+        <div class="particle p1"></div>
+        <div class="particle p2"></div>
+        <div class="particle p3"></div>
+        <div class="particle p4"></div>
+        <div class="particle p5"></div>
+        <div class="particle p6"></div>
+      </div>
+
+      <!-- 主内容区 -->
+      <div class="welcome-content">
+        <!-- 徽章 -->
+        <div class="welcome-badge">
+          <span class="badge-dot"></span>
+          <span>安全 · 快速 · 去中心化</span>
+        </div>
+
+        <!-- 标题区 -->
+        <h1 class="welcome-title">
+          <span class="title-line">开启您的</span>
+          <span class="title-highlight">数字资产之旅</span>
+        </h1>
+
+        <p class="welcome-subtitle">
+          基于 UTXO 模型的新一代区块链钱包，为您提供安全可靠的资产管理体验
+        </p>
+
+        <!-- 特性卡片 -->
+        <div class="feature-cards">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <h3>安全保障</h3>
+            <p>本地加密存储，私钥永不上传</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+            </div>
+            <h3>极速转账</h3>
+            <p>优化的 UTXO 算法，秒级确认</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </div>
+            <h3>跨链互通</h3>
+            <p>支持多链资产，一站式管理</p>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="welcome-actions">
+          <button id="registerAccountBtn" class="welcome-btn welcome-btn-primary">
+            <span>立即开始</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
+          <button id="loginAccountBtn" class="welcome-btn welcome-btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            <span>已有账户？登录</span>
+          </button>
+        </div>
+
+        <!-- 底部装饰 -->
+        <div class="welcome-footer-info">
+          <div class="info-item">
+            <span class="info-number">100K+</span>
+            <span class="info-label">活跃用户</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-item">
+            <span class="info-number">$2.5B</span>
+            <span class="info-label">交易总额</span>
+          </div>
+          <div class="info-divider"></div>
+          <div class="info-item">
+            <span class="info-number">99.9%</span>
+            <span class="info-label">安全保障</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧3D卡片装饰 -->
+      <div class="welcome-visual">
+        <div class="visual-card">
+          <div class="card-shine"></div>
+          <div class="card-content">
+            <div class="card-logo">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="url(#cardGradient)" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <defs>
+                  <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#0ea5e9" />
+                    <stop offset="100%" style="stop-color:#8b5cf6" />
+                  </linearGradient>
+                </defs>
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+            </div>
+            <div class="card-number">•••• •••• •••• 4242</div>
+            <div class="card-info">
+              <div class="card-holder">
+                <span class="label">持卡人</span>
+                <span class="value">UTXO WALLET</span>
+              </div>
+              <div class="card-expiry">
+                <span class="label">有效期</span>
+                <span class="value">∞</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- 装饰性浮动元素 -->
+        <div class="floating-decorations">
+          <!-- 迷你钱包卡片 -->
+          <div class="deco-item deco-wallet">
+            <div class="wallet-inner">
+              <div class="wallet-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                  <path d="M1 10h22" />
+                  <circle cx="18" cy="15" r="2" />
+                </svg>
+              </div>
+              <div class="wallet-amount">+128.5</div>
+            </div>
+          </div>
+
+          <!-- NFT艺术卡片 -->
+          <div class="deco-item deco-nft">
+            <div class="nft-inner">
+              <div class="nft-image">
+                <div class="nft-gradient"></div>
+                <div class="nft-pattern"></div>
+              </div>
+              <div class="nft-info">
+                <span class="nft-name">CryptoArt</span>
+                <span class="nft-price">2.5 ETH</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 加密币圆形 -->
+          <div class="deco-item deco-coin">
+            <div class="coin-inner">
+              <div class="coin-symbol">₿</div>
+              <div class="coin-shine"></div>
+            </div>
+          </div>
+
+          <!-- 数据图表卡 -->
+          <div class="deco-item deco-chart">
+            <div class="chart-inner">
+              <div class="chart-bars">
+                <span style="height: 40%"></span>
+                <span style="height: 65%"></span>
+                <span style="height: 45%"></span>
+                <span style="height: 80%"></span>
+                <span style="height: 55%"></span>
+              </div>
+              <div class="chart-trend">↗ 12.5%</div>
+            </div>
+          </div>
+
+          <!-- 区块链立方体 -->
+          <div class="deco-item deco-cube">
+            <div class="cube-container">
+              <div class="cube-3d">
+                <div class="cube-face front"></div>
+                <div class="cube-face back"></div>
+                <div class="cube-face right"></div>
+                <div class="cube-face left"></div>
+                <div class="cube-face top"></div>
+                <div class="cube-face bottom"></div>
+              </div>
+              <div class="cube-shadow"></div>
+            </div>
+          </div>
+
+          <!-- 以太坊标志 -->
+          <div class="deco-item deco-eth">
+            <div class="eth-inner">
+              <svg viewBox="0 0 32 32" fill="none">
+                <path d="M16 2L6 16.5L16 22L26 16.5L16 2Z" fill="url(#ethGrad1)" />
+                <path d="M16 2L6 16.5L16 12.5V2Z" fill="url(#ethGrad2)" opacity="0.6" />
+                <path d="M16 24L6 18L16 30L26 18L16 24Z" fill="url(#ethGrad1)" />
+                <defs>
+                  <linearGradient id="ethGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#627eea" />
+                    <stop offset="100%" style="stop-color:#8b5cf6" />
+                  </linearGradient>
+                  <linearGradient id="ethGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#627eea" />
+                    <stop offset="100%" style="stop-color:#4f46e5" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 钱包管理页面 - 无框设计 -->
+    <section class="hidden entry-page" id="entryCard">
+      <!-- 页面级背景粒子 -->
+      <div class="entry-page-particles">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- 返回按钮 -->
+      <button class="entry-back-btn" id="entryBackBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span>返回</span>
+      </button>
+
+      <!-- 页面标题区 -->
+      <header class="entry-page-header">
+        <div class="entry-page-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="6" width="20" height="12" rx="2" />
+            <circle cx="12" cy="12" r="2" />
+            <path d="M6 12h.01M18 12h.01" />
+          </svg>
+          <div class="entry-page-icon-glow"></div>
+        </div>
+        <h1 class="entry-page-title">钱包管理</h1>
+        <p class="entry-page-subtitle" id="entryImportSuggest">生成新钱包或导入已有钱包，开启您的数字资产之旅</p>
+      </header>
+
+      <!-- 主内容区 -->
+      <main class="entry-page-main">
+        <!-- 操作按钮区 -->
+        <div class="entry-action-cards">
+          <button id="createWalletBtn" class="entry-action-card entry-action-card--create">
+            <div class="entry-action-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v8M8 12h8" />
+              </svg>
+            </div>
+            <div class="entry-action-info">
+              <h4>新建钱包</h4>
+              <p>生成全新的密钥对</p>
+            </div>
+            <svg class="entry-action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <button id="importWalletBtn" class="entry-action-card entry-action-card--import">
+            <div class="entry-action-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </div>
+            <div class="entry-action-info">
+              <h4>导入钱包</h4>
+              <p>使用已有私钥导入</p>
+            </div>
+            <svg class="entry-action-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- 提示信息 -->
+        <div class="entry-tip-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          <span>每次新建或导入都会加入到当前账户的钱包列表</span>
+        </div>
+
+        <!-- 钱包列表区 -->
+        <div class="entry-wallet-block">
+          <div class="entry-wallet-header">
+            <div class="entry-wallet-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+            </div>
+            <div class="entry-wallet-info">
+              <span class="entry-wallet-label">已添加钱包</span>
+              <span class="entry-wallet-count" id="walletCount">0</span>
+            </div>
+          </div>
+          <ol id="walletBriefList" class="entry-wallet-list hidden"></ol>
+          <button id="briefToggleBtn" class="entry-toggle-btn hidden">
+            <span>展开更多</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <div id="walletEmptyTip" class="entry-empty-tip hidden">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>请先添加至少一个钱包地址</span>
+          </div>
+        </div>
+
+        <!-- 底部操作 -->
+        <div class="entry-page-actions">
+          <button id="entryNextBtn" class="entry-next-btn" disabled>
+            <span>继续下一步</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </main>
+    </section>
+
+    <!-- 新建钱包页面 - 无框设计 -->
+    <section class="hidden new-page" id="newUserCard">
+      <!-- 页面级背景粒子 -->
+      <div class="new-page-particles">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- 返回按钮 -->
+      <button class="new-back-btn" id="newBackBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span>返回</span>
+      </button>
+
+      <!-- 页面标题区 -->
+      <header class="new-page-header">
+        <div class="new-page-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <div class="new-page-icon-glow"></div>
+        </div>
+        <h1 class="new-page-title">创建新账户</h1>
+        <p class="new-page-subtitle">安全生成 P-256 ECDSA 密钥对，开启您的区块链之旅</p>
+      </header>
+
+      <!-- 主内容区 -->
+      <main class="new-page-main">
+        <!-- 加载动画 -->
+        <div id="newLoader" class="new-loader hidden">
+          <div class="new-loader-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+          </div>
+          <div class="new-loader-text">
+            <span>正在生成密钥</span>
+            <span class="new-loader-dots"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <!-- 结果展示区 -->
+        <div id="result" class="new-result hidden">
+          <!-- 成功标识 -->
+          <div class="new-result-success">
+            <div class="new-success-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3>账户创建成功</h3>
+          </div>
+
+          <!-- 信息网格 -->
+          <div class="new-result-cards">
+            <div class="new-info-card">
+              <div class="new-info-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Account ID</span>
+              </div>
+              <code id="accountId" class="new-info-value"></code>
+            </div>
+
+            <div class="new-info-card">
+              <div class="new-info-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span>主地址</span>
+              </div>
+              <code id="address" class="new-info-value"></code>
+            </div>
+          </div>
+
+          <!-- 密钥区域 -->
+          <div class="new-keys-section">
+            <div class="new-key-card new-key-card--private new-key-card--collapsed" id="privateKeyItem">
+              <div class="new-key-header" id="privateKeyToggle">
+                <div class="new-key-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                      d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                  </svg>
+                  <span>私钥（Hex）</span>
+                  <span class="new-warning-badge">请勿泄露</span>
+                </div>
+                <svg class="new-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+              <code id="privHex" class="new-key-value"></code>
+            </div>
+
+            <div class="new-key-card new-key-card--public">
+              <div class="new-key-header">
+                <div class="new-key-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  <span>公钥（X / Y Hex）</span>
+                </div>
+              </div>
+              <code id="pubX" class="new-key-value"></code>
+              <code id="pubY" class="new-key-value"></code>
+            </div>
+          </div>
+
+          <!-- 警告提示 -->
+          <div class="new-result-tip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>请妥善保存以上信息，私钥一旦丢失将无法找回！</span>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="new-page-actions">
+          <button id="createBtn" class="new-action-btn new-action-btn--secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            <span>重新生成</span>
+          </button>
+          <button id="newNextBtn" class="new-action-btn new-action-btn--primary">
+            <span>添加到钱包列表</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
+        </div>
+      </main>
+    </section>
+
+    <!-- 登录账户页面 - 无框设计 -->
+    <section class="hidden login-page" id="loginCard">
+      <!-- 页面级背景粒子 -->
+      <div class="login-page-particles">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- 返回按钮 -->
+      <button class="login-back-btn" id="loginBackBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span>返回</span>
+      </button>
+
+      <!-- 页面标题区 -->
+      <header class="login-page-header">
+        <div class="login-page-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
+          <div class="login-page-icon-glow"></div>
+        </div>
+        <h1 class="login-page-title">登录账户</h1>
+        <p class="login-page-subtitle">使用私钥安全登录，恢复您的账户信息</p>
+      </header>
+
+      <!-- 主内容区 -->
+      <main class="login-page-main">
+        <!-- 登录表单卡片 -->
+        <div class="login-form-card">
+          <div class="login-input-group">
+            <label class="login-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <span>私钥（Hex）</span>
+            </label>
+            <div class="login-input-wrapper">
+              <input id="loginPrivHex" class="login-input" type="password" placeholder="请输入您的私钥 Hex..."
+                autocomplete="off" />
+              <button type="button" class="login-toggle-visibility" id="loginToggleVisibility">
+                <svg class="eye-open hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button id="loginBtn" class="login-submit-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            <span>安全登录</span>
+          </button>
+        </div>
+
+        <!-- 安全提示 -->
+        <div class="login-tip-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span>请确保在安全的环境中输入私钥，切勿泄露给他人</span>
+        </div>
+
+        <!-- 加载动画 -->
+        <div id="loginLoader" class="login-loader hidden">
+          <div class="login-loader-ring">
+            <span class="ring-dot"></span>
+            <span class="ring-dot"></span>
+            <span class="ring-dot"></span>
+          </div>
+          <div class="login-loader-text">
+            <span>正在验证身份</span>
+            <span class="loader-dots"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <!-- 登录结果展示 -->
+        <div id="loginResult" class="login-result hidden">
+          <!-- 成功标识 -->
+          <div class="login-success-header">
+            <div class="login-success-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3>登录成功</h3>
+          </div>
+
+          <!-- 账户信息网格 -->
+          <div class="login-result-grid">
+            <div class="login-result-item">
+              <div class="login-result-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Account ID</span>
+              </div>
+              <code id="loginAccountId" class="login-result-value"></code>
+            </div>
+            <div class="login-result-item">
+              <div class="login-result-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span>主地址</span>
+              </div>
+              <code id="loginAddress" class="login-result-value"></code>
+            </div>
+          </div>
+
+          <!-- 密钥信息 -->
+          <div class="login-result-keys">
+            <div class="login-result-item login-result-item--private collapsed" id="loginPrivContainer">
+              <div class="login-result-label login-result-label--clickable">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>私钥（Hex）</span>
+                <span class="login-warning-badge">敏感信息</span>
+                <svg class="login-toggle-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+              <code id="loginPrivOut" class="login-result-value login-result-value--secret"></code>
+            </div>
+            <div class="login-result-item">
+              <div class="login-result-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 5 5" />
+                </svg>
+                <span>公钥（X / Y Hex）</span>
+              </div>
+              <code id="loginPubX" class="login-result-value"></code>
+              <code id="loginPubY" class="login-result-value"></code>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="login-actions">
+            <button id="loginCancelBtn" class="login-cancel-btn hidden">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              <span>重新登录</span>
+            </button>
+            <button id="loginNextBtn" class="login-next-btn hidden">
+              <span>进入钱包管理</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </main>
+    </section>
+
+    <!-- 导入钱包卡片：默认隐藏，导入后显示账户详细信息 -->
+    <!-- 导入钱包页面 - 全新设计 -->
+    <!-- 导入钱包页面 - 无框全屏式设计 -->
+    <section class="hidden import-page" id="importCard">
+      <!-- 页面级背景粒子 -->
+      <div class="import-page-particles">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- 返回按钮 -->
+      <button class="import-back-btn" id="importBackBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7" />
+        </svg>
+        <span>返回</span>
+      </button>
+
+      <!-- 页面标题区 -->
+      <header class="import-page-header">
+        <div class="import-page-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <div class="import-page-icon-glow"></div>
+        </div>
+        <h1 class="import-page-title">导入钱包</h1>
+        <p class="import-page-subtitle">通过私钥恢复您的钱包地址，安全快捷</p>
+      </header>
+
+      <!-- 主内容区 -->
+      <main class="import-page-main">
+        <!-- 输入区块 -->
+        <div class="import-block import-block--input">
+          <div class="import-block-header">
+            <div class="import-block-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+              </svg>
+            </div>
+            <div class="import-block-title">
+              <span>私钥（Hex）</span>
+              <span class="import-security-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+                安全输入
+              </span>
+            </div>
+          </div>
+          <div class="import-input-wrapper">
+            <input id="importPrivHex" class="import-input" type="password" placeholder="请输入 64 位十六进制私钥"
+              autocomplete="off" spellcheck="false" />
+            <button type="button" class="import-toggle-visibility" id="importToggleVisibility" title="切换显示/隐藏">
+              <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg class="eye-closed hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+              </svg>
+            </button>
+          </div>
+          <p class="import-input-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span>支持带 0x 前缀或纯 64 位十六进制格式</span>
+          </p>
+        </div>
+
+        <!-- 安全提醒 -->
+        <div class="import-block import-block--warning">
+          <div class="import-warning-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <div class="import-warning-text">
+            <strong>安全提醒</strong>
+            <p>请确保您在安全的环境中输入私钥，私钥将仅存储在本地浏览器中。</p>
+          </div>
+        </div>
+
+        <!-- 加载动画 -->
+        <div id="importLoader" class="import-loader hidden">
+          <div class="import-loader-spinner">
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+            <div class="spinner-ring"></div>
+          </div>
+          <div class="import-loader-text">
+            <span>正在验证并导入</span>
+            <span class="import-loader-dots"><i></i><i></i><i></i></span>
+          </div>
+        </div>
+
+        <!-- 结果展示区 -->
+        <div id="importResult" class="import-result hidden">
+          <!-- 成功标识 -->
+          <div class="import-result-success">
+            <div class="import-success-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3>钱包导入成功</h3>
+          </div>
+
+          <!-- 信息网格 -->
+          <div class="import-result-cards">
+            <div class="import-info-card">
+              <div class="import-info-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>Account ID</span>
+              </div>
+              <code id="importAccountId" class="import-info-value"></code>
+            </div>
+
+            <div class="import-info-card">
+              <div class="import-info-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span>主地址</span>
+              </div>
+              <code id="importAddress" class="import-info-value"></code>
+            </div>
+          </div>
+
+          <!-- 密钥区域 -->
+          <div class="import-keys-section">
+            <div class="import-key-card import-key-card--private import-key-card--collapsed" id="importPrivateKeyItem">
+              <div class="import-key-header" id="importPrivateKeyToggle">
+                <div class="import-key-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                      d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                  </svg>
+                  <span>私钥（Hex）</span>
+                  <span class="import-warning-badge">请勿泄露</span>
+                </div>
+                <svg class="import-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+              <code id="importPrivHexOut" class="import-key-value"></code>
+            </div>
+
+            <div class="import-key-card import-key-card--public">
+              <div class="import-key-header">
+                <div class="import-key-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                  <span>公钥（X / Y Hex）</span>
+                </div>
+              </div>
+              <code id="importPubX" class="import-key-value"></code>
+              <code id="importPubY" class="import-key-value"></code>
+            </div>
+          </div>
+
+          <!-- 警告提示 -->
+          <div class="import-result-tip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span>请妥善保存以上信息，私钥一旦丢失将无法找回！</span>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="import-page-actions">
+          <button id="importBtn" class="import-action-btn import-action-btn--primary" data-mode="wallet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>导入钱包</span>
+          </button>
+          <button id="importNextBtn" class="import-action-btn import-action-btn--secondary hidden">
+            <span>继续下一步</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
+        </div>
+      </main>
+    </section>
+
+    <!-- 下一步：空白页面占位 -->
+    <section class="card hidden" id="nextCard">
+      <!-- 动态背景 -->
+      <div class="join-card-bg">
+        <div class="bg-orb bg-orb--1"></div>
+        <div class="bg-orb bg-orb--2"></div>
+        <div class="bg-orb bg-orb--3"></div>
+      </div>
+
+      <!-- 主内容区 -->
+      <div class="join-card-content">
+        <!-- 标题区域 -->
+        <div class="join-header">
+          <div class="join-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <h1 class="join-header-title">加入担保组织</h1>
+          <p class="join-header-subtitle">选择一个担保组织以获得更稳定的交易服务与账户保障</p>
+        </div>
+
+        <!-- 特性展示 -->
+        <div class="join-features">
+          <div class="join-feature">
+            <div class="join-feature-icon">⚡</div>
+            <span class="join-feature-text">加速交易确认</span>
+          </div>
+          <div class="join-feature">
+            <div class="join-feature-icon">🔒</div>
+            <span class="join-feature-text">跨区保障权益</span>
+          </div>
+          <div class="join-feature">
+            <div class="join-feature-icon">🧭</div>
+            <span class="join-feature-text">个性化地址管理</span>
+          </div>
+          <div class="join-feature">
+            <div class="join-feature-icon">📊</div>
+            <span class="join-feature-text">利息收益统计</span>
+          </div>
+        </div>
+
+        <!-- 选项卡片区 -->
+        <div class="join-options">
+          <!-- 系统推荐 -->
+          <div class="join-option-card join-option-card--recommend" id="recPane">
+            <span class="join-option-badge">推荐</span>
+            <div class="join-option-header">
+              <div class="join-option-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="join-option-title">系统推荐</h3>
+                <p class="join-option-desc">为您自动匹配最优组织</p>
+              </div>
+            </div>
+            <div class="join-org-info">
+              <div class="join-org-grid">
+                <div class="join-org-item">
+                  <span class="join-org-label">Group ID</span>
+                  <span class="join-org-value" id="recGroupID">10000000</span>
+                </div>
+                <div class="join-org-item">
+                  <span class="join-org-label">Aggre Node</span>
+                  <span class="join-org-value" id="recAggre">39012088</span>
+                </div>
+                <div class="join-org-item">
+                  <span class="join-org-label">Assign Node</span>
+                  <span class="join-org-value" id="recAssign">17770032</span>
+                </div>
+                <div class="join-org-item">
+                  <span class="join-org-label">Pledge Address</span>
+                  <span class="join-org-value" id="recPledge">5bd548d7...bef5dd09</span>
+                </div>
+              </div>
+            </div>
+            <button id="joinRecBtn" class="join-option-action">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              加入此组织
+            </button>
+          </div>
+
+          <!-- 搜索组织 -->
+          <div class="join-option-card join-option-card--search">
+            <div class="join-option-header">
+              <div class="join-option-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="join-option-title">搜索组织</h3>
+                <p class="join-option-desc">输入组织编号查找</p>
+              </div>
+            </div>
+            <div class="join-search-box">
+              <input id="groupSearch" class="join-search-input" type="text" placeholder="输入担保组织编号..." />
+            </div>
+            <div id="groupSuggest" class="suggest hidden"></div>
+            <div id="searchResult" class="join-org-info hidden">
+              <div class="join-org-grid">
+                <div class="join-org-item">
+                  <span class="join-org-label">Group ID</span>
+                  <span class="join-org-value" id="srGroupID"></span>
+                </div>
+                <div class="join-org-item">
+                  <span class="join-org-label">Aggre Node</span>
+                  <span class="join-org-value" id="srAggre"></span>
+                </div>
+                <div class="join-org-item">
+                  <span class="join-org-label">Assign Node</span>
+                  <span class="join-org-value" id="srAssign"></span>
+                </div>
+                <div class="join-org-item">
+                  <span class="join-org-label">Pledge Address</span>
+                  <span class="join-org-value" id="srPledge"></span>
+                </div>
+              </div>
+            </div>
+            <div id="searchEmpty" class="join-search-empty">
+              <div class="join-search-empty-icon">🔍</div>
+              <div class="join-search-empty-text">输入组织编号开始搜索</div>
+            </div>
+            <button id="joinSearchBtn" class="join-option-action" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              加入此组织
+            </button>
+          </div>
+        </div>
+
+        <!-- 跳过选项 -->
+        <div class="join-skip-section">
+          <div class="join-skip-divider">
+            <span>或者</span>
+          </div>
+          <button id="skipJoinBtn" class="join-skip-btn">暂不加入担保组织</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="inquiryCard">
+      <div class="card-header">
+        <h2>正在连接</h2>
+      </div>
+      <div class="loader loader--hero">
+        <div class="bolt" aria-hidden="true">
+          <span class="seg seg1"></span>
+          <span class="seg seg2"></span>
+          <span class="seg seg3"></span>
+          <span class="seg seg4"></span>
+        </div>
+        <span>正在连接到快速转账网络...</span>
+      </div>
+      <p class="tip">正在发起网络问询以确定账户所属关系，请稍候。</p>
+    </section>
+
+    <section class="card hidden" id="memberInfoCard">
+      <div class="card-header">
+        <h2>账户与担保组织信息</h2>
+      </div>
+      <div class="mi-info">
+        <div class="mi-left">
+          <div class="mi-card">
+            <h3>Account ID</h3><code id="miAccountId"></code>
+          </div>
+          <div class="mi-card">
+            <h3>担保组织</h3><code id="miGroupId"></code>
+          </div>
+        </div>
+        <div class="mi-right">
+          <div class="mi-card">
+            <h3>主地址</h3>
+            <code id="miAddress" class="break"></code>
+            <div class="tags">
+              <span class="tag tag--pgc" id="miPGC">PGC: 0</span>
+              <span class="tag tag--btc" id="miBTC">BTC: 0</span>
+              <span class="tag tag--eth" id="miETH">ETH: 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="miConfirmBtn" class="btn primary">确认信息，进入系统</button>
+      </div>
+    </section>
+
+    <section class="card hidden" id="walletCard">
+      <div class="wallet-layout">
+        <div class="wallet-left wallet-left--legend">
+          <div class="addr-head">
+            <h3 class="section-title">我的钱包</h3>
+          </div>
+          <div class="wallet-overview-card">
+            <div class="overview-header">
+              <span class="overview-title">总资产估值</span>
+              <div class="overview-actions">
+                <button id="refreshWalletBtn" class="icon-btn" aria-label="刷新余额" title="刷新余额">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                </button>
+                <button id="openCreateAddrBtn" class="icon-btn" aria-label="新建地址" title="新建地址">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+                <button id="openImportAddrBtn" class="icon-btn" aria-label="导入地址" title="导入地址">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="main-balance">
+              <span id="walletUSDT" class="balance-value"><span class="amt">0</span><span
+                  class="unit">USDT</span></span>
+            </div>
+
+            <div class="currency-breakdown">
+              <div class="currency-item">
+                <span class="c-label"><span class="dot dot--pgc"></span>PGC</span>
+                <span class="c-val tag--pgc">0</span>
+              </div>
+              <div class="currency-item">
+                <span class="c-label"><span class="dot dot--btc"></span>BTC</span>
+                <span class="c-val tag--btc">0</span>
+              </div>
+              <div class="currency-item">
+                <span class="c-label"><span class="dot dot--eth"></span>ETH</span>
+                <span class="c-val tag--eth">0</span>
+              </div>
+            </div>
+
+            <div class="gas-info">
+              <span class="gas-label">累计利息收益</span>
+              <span id="walletGAS" class="gas-value"><span class="amt">0</span><span class="unit">GAS</span></span>
+            </div>
+
+            <div class="chart-container">
+              <div id="walletTotalChart" class="addr-chart addr-chart--overview"></div>
+            </div>
+          </div>
+          <div class="pane pane--tight" id="walletStructPane">
+            <button id="walletStructToggle" class="btn primary full-width"
+              style="justify-content: center;">展开账户结构体</button>
+            <pre id="walletStructBox" class="result hidden struct-box" aria-live="polite"></pre>
+          </div>
+          <div id="walletAddrList" class="addr-list"></div>
+        </div>
+        <div class="wallet-right">
+          <div class="pane pane--legend" role="region" aria-labelledby="txFormTitle">
+            <h3 id="txFormTitle" class="section-title">转账交易</h3>
+            <div class="form tx-form" role="form" aria-describedby="txFormTitle">
+              <div class="tx-section" role="group" aria-labelledby="srcAddrHead">
+                <div class="tx-subhead" id="srcAddrHead">选择来源地址</div>
+                <div id="srcAddrList" class="tx-addr-list" role="list"></div>
+              </div>
+              <div class="tx-section" role="group" aria-labelledby="billHead">
+                <div class="tx-head-row">
+                  <div class="tx-subhead" id="billHead">添加转账账单</div><button id="addBillBtn" class="btn success btn--sm"
+                    aria-label="添加一笔账单">+</button>
+                </div>
+                <div id="billList" class="bill-list" role="list"></div>
+
+              </div>
+              <div class="tx-section tx-change collapsed" role="group" aria-labelledby="changeHead">
+                <div class="tx-change-head" id="changeSummary">
+                  <div class="tx-subhead" id="changeHead">找零地址</div><span id="changeAddrText"
+                    class="summary-value"></span>
+                </div>
+                <div class="tx-grid-3 tx-grid--stack" role="group" aria-label="按币种设置找零地址">
+                  <div class="addr-row">
+                    <label>PGC</label>
+                    <select id="chAddrPGC" class="input" style="display:none"></select>
+                    <div id="csChPGC" class="input custom-select cs-addr" role="button" aria-label="PGC 找零地址"
+                      data-coin="PGC">
+                      <span class="custom-select__value"><span class="coin-icon coin--pgc"></span><span class="addr-val"
+                          style="margin-left:6px;color:#334155"></span></span>
+                      <span class="custom-select__arrow">▾</span>
+                      <div class="custom-select__menu"></div>
+                    </div>
+                  </div>
+                  <div class="addr-row">
+                    <label>BTC</label>
+                    <select id="chAddrBTC" class="input" style="display:none"></select>
+                    <div id="csChBTC" class="input custom-select cs-addr" role="button" aria-label="BTC 找零地址"
+                      data-coin="BTC">
+                      <span class="custom-select__value"><span class="coin-icon coin--btc"></span><span class="addr-val"
+                          style="margin-left:6px;color:#334155"></span></span>
+                      <span class="custom-select__arrow">▾</span>
+                      <div class="custom-select__menu"></div>
+                    </div>
+                  </div>
+                  <div class="addr-row">
+                    <label>ETH</label>
+                    <select id="chAddrETH" class="input" style="display:none"></select>
+                    <div id="csChETH" class="input custom-select cs-addr" role="button" aria-label="ETH 找零地址"
+                      data-coin="ETH">
+                      <span class="custom-select__value"><span class="coin-icon coin--eth"></span><span class="addr-val"
+                          style="margin-left:6px;color:#334155"></span></span>
+                      <span class="custom-select__arrow">▾</span>
+                      <div class="custom-select__menu"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tx-section" role="group" aria-labelledby="optHead">
+                <div class="tx-subhead" id="optHead">交易选项</div>
+                <div class="tx-options">
+                  <div class="opt-group">
+                    <label class="opt-group-label">交易形式</label>
+                    <div class="opt-mode-segmented">
+                      <label class="segment-item">
+                        <input type="radio" name="tfModeChoice" id="tfModeQuick" value="quick" checked>
+                        <span class="segment-content">快速转账</span>
+                      </label>
+                      <label class="segment-item">
+                        <input type="radio" name="tfModeChoice" id="tfModeCross" value="cross">
+                        <span class="segment-content">跨链转账</span>
+                      </label>
+                      <label class="segment-item">
+                        <input type="radio" name="tfModeChoice" id="tfModePledge" value="pledge">
+                        <span class="segment-content">质押交易</span>
+                      </label>
+                    </div>
+                    <select id="tfMode" class="input" style="display:none">
+                      <option value="quick" selected>快速转账</option>
+                      <option value="cross">跨链转账</option>
+                      <option value="pledge">质押交易</option>
+                    </select>
+                  </div>
+
+                  <div class="opt-row-modern">
+                    <div class="opt-input-modern">
+                      <label for="extraGasPGC">额外Gas兑换</label>
+                      <div class="input-wrapper">
+                        <input id="extraGasPGC" class="input-clean" type="number" placeholder="0" value="0" />
+                        <span class="input-suffix">PGC</span>
+                      </div>
+                    </div>
+
+                    <div class="opt-input-modern">
+                      <label for="txGasInput">交易Gas</label>
+                      <div class="input-wrapper">
+                        <input id="txGasInput" class="input-clean" type="number" placeholder="1" value="1" />
+                        <span class="input-suffix">Gas</span>
+                      </div>
+                    </div>
+
+                    <div class="opt-toggle-modern">
+                      <label class="toggle-switch">
+                        <input id="useTXCerChk" type="checkbox" aria-label="优先使用TXCer" />
+                        <span class="toggle-slider"></span>
+                      </label>
+                      <span class="toggle-label">PreTXCer</span>
+                    </div>
+
+                    <select id="useTXCer" class="input" style="display:none">
+                      <option value="true" selected>是</option>
+                      <option value="false">否</option>
+                    </select>
+                    <select id="isPledge" class="input" style="display:none">
+                      <option value="false" selected>否</option>
+                      <option value="true">是</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="actions"><button id="tfSendBtn" class="btn primary" aria-label="生成交易结构体">生成交易结构体</button>
+                <button id="buildTxBtn" class="btn success hidden" aria-label="构造交易">构造交易</button>
+              </div>
+              <p id="txError" class="tip tip--error hidden" aria-live="polite"></p>
+              <pre id="txPreview" class="result hidden" style="white-space:pre-wrap;word-break:break-word;"
+                aria-live="polite"></pre>
+              <pre id="txFinalPreview" class="result hidden"
+                style="white-space:pre-wrap;word-break:break-word;margin-top:12px;border-left:4px solid #10b981;background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);"
+                aria-live="polite"></pre>
+            </div>
+          </div>
+          <div class="pane pane--org">
+            <h3>担保组织信息</h3>
+            <div id="woCard" class="org-card">
+              <div class="org-grid">
+                <div class="org-field">
+                  <span class="org-label">GroupID</span>
+                  <code id="woGroupID" class="org-value"></code>
+                </div>
+                <div class="org-field">
+                  <span class="org-label">AggreNode</span>
+                  <code id="woAggre" class="org-value"></code>
+                </div>
+                <div class="org-field">
+                  <span class="org-label">AssignNode</span>
+                  <code id="woAssign" class="org-value"></code>
+                </div>
+                <div class="org-field full-width">
+                  <span class="org-label">PledgeAddress</span>
+                  <code id="woPledge" class="org-value break"></code>
+                </div>
+              </div>
+              <div class="actions">
+                <button id="woExitBtn" class="btn secondary">退出担保组织</button>
+              </div>
+              <div class="org-bg-deco"></div>
+            </div>
+            <div id="woEmpty" class="empty-pane org-card org-card--empty hidden">
+              <div class="empty-icon">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                      <stop offset="0" stop-color="#0ea5e9" />
+                      <stop offset="1" stop-color="#38bdf8" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M32 6l18 7v14c0 12-9 23-18 28-9-5-18-16-18-28V13l18-7z" fill="url(#g1)" />
+                  <circle cx="32" cy="26" r="9" fill="#fff" opacity=".22" />
+                  <path d="M40 24l-10 10-4-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" opacity=".85" />
+                </svg>
+              </div>
+              <div class="empty-text">你没有加入担保组织，无法享受福利与加速等服务</div>
+              <div class="empty-glow"><span class="dot dot--big"></span><span class="dot"></span><span
+                  class="dot"></span><span class="dot dot--big"></span><span class="dot"></span><span
+                  class="dot"></span><span class="dot dot--big"></span><span class="dot"></span><span </div>
+                  <div class="actions">
+                    <button id="woJoinBtn" class="btn primary">加入担保组织</button>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </section>
+
+    <section class="card hidden" id="importNextCard">
+      <pre id="txFinalPreview" class="result hidden"
+        style="white-space:pre-wrap;word-break:break-word;margin-top:12px;border-left:4px solid #10b981;background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);"
+        aria-live="polite"></pre>
+      </div>
+      </div>
+      <div class="pane pane--org">
+        <h3>担保组织信息</h3>
+        <div id="woCard" class="org-card">
+          <div class="grid">
+            <div>
+              <h3>GroupID</h3>
+              <code id="woGroupID"></code>
+            </div>
+            <div>
+              <h3>AggreNode</h3>
+              <code id="woAggre"></code>
+            </div>
+          </div>
+          <div class="grid">
+            <div>
+              <h3>AssignNode</h3>
+              <code id="woAssign"></code>
+            </div>
+            <div>
+              <h3>PledgeAddress</h3>
+              <code id="woPledge" class="break"></code>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="woExitBtn" class="btn secondary">退出担保组织</button>
+          </div>
+        </div>
+        <div id="woEmpty" class="empty-pane org-card org-card--empty hidden">
+          <div class="empty-icon">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <defs>
+                <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                  aria-live="polite"></pre>
+          </div>
+        </div>
+        <div class="pane pane--org">
+          <h3>担保组织信息</h3>
+          <div id="woCard" class="org-card">
+            <div class="grid">
+              <div>
+                <h3>GroupID</h3>
+                <code id="woGroupID"></code>
+              </div>
+              <div>
+                <h3>AggreNode</h3>
+                <code id="woAggre"></code>
+              </div>
+            </div>
+            <div class="grid">
+              <div>
+                <h3>AssignNode</h3>
+                <code id="woAssign"></code>
+              </div>
+              <div>
+                <h3>PledgeAddress</h3>
+                <code id="woPledge" class="break"></code>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="woExitBtn" class="btn secondary">退出担保组织</button>
+            </div>
+          </div>
+          <div id="woEmpty" class="empty-pane org-card org-card--empty hidden">
+            <div class="empty-icon">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <defs>
+                  <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0" stop-color="#0ea5e9" />
+                    <stop offset="1" stop-color="#38bdf8" />
+                  </linearGradient>
+                </defs>
+                <path d="M32 6l18 7v14c0 12-9 23-18 28-9-5-18-16-18-28V13l18-7z" fill="url(#g1)" />
+                <circle cx="32" cy="26" r="9" fill="#fff" opacity=".22" />
+                <path d="M40 24l-10 10-4-4" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" opacity=".85" />
+              </svg>
+            </div>
+            <div class="empty-text">你没有加入担保组织，无法享受福利与加速等服务</div>
+            <div class="empty-glow"><span class="dot dot--big"></span><span class="dot"></span><span
+                class="dot"></span><span class="dot dot--big"></span><span class="dot"></span><span
+                class="dot"></span><span class="dot dot--big"></span><span class="dot"></span><span
+                class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+            <div class="actions">
+              <button id="woJoinBtn" class="btn primary">加入担保组织</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <section class="card hidden" id="importNextCard">
+      <div class="card-header">
+        <h2>导入流程下一步</h2>
+      </div>
+      <p class="tip">此页面为导入钱包后的下一步占位，后续将专门更新。</p>
+    </section>
+    <div id="joinOverlay" class="overlay hidden">
+      <div class="loader">
+        <span class="spinner"></span>
+        <span>正在申请加入担保组织...</span>
+      </div>
+    </div>
+
+    <!-- 自定义 Toast 提示组件 -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <div id="actionOverlay" class="overlay overlay--modern hidden">
+      <div class="overlay-loader" id="unifiedActionCard">
+        <!-- 加载状态 -->
+        <div class="unified-loading" id="unifiedLoading">
+          <div class="overlay-loader-visual">
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+            <div class="loader-dot"></div>
+          </div>
+          <span id="actionOverlayText" class="overlay-loader-text">正在处理...</span>
+        </div>
+        <!-- 成功状态 -->
+        <div class="unified-success hidden" id="unifiedSuccess">
+          <div class="success-icon-wrap">
+            <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h3 class="success-title" id="unifiedTitle">操作成功</h3>
+          <p class="success-text" id="unifiedText">已完成本次操作</p>
+          <div class="success-actions">
+            <button id="unifiedCancelBtn" class="unified-btn unified-btn--secondary hidden">取消</button>
+            <button id="unifiedOkBtn" class="unified-btn unified-btn--primary">好的</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="confirmSkipModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog">
+        <h3>确认不加入担保组织</h3>
+        <p class="tip">这是一个警告操作，确认后将不加入担保组织并进入下一步。</p>
+        <div class="actions">
+          <button id="confirmSkipCancel" class="btn secondary">取消</button>
+          <button id="confirmSkipOk" class="btn primary">确认</button>
+        </div>
+      </div>
+    </div>
+    <div id="confirmExitModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog">
+        <h3>确认退出钱包</h3>
+        <p class="tip">退出后将清空当前信息并返回首页。</p>
+        <div class="actions">
+          <button id="confirmExitCancel" class="btn secondary">取消</button>
+          <button id="confirmExitOk" class="btn primary">确认</button>
+        </div>
+      </div>
+    </div>
+    <div id="confirmProceedModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog">
+        <h3>确认导入子地址</h3>
+        <p id="confirmProceedText" class="tip">当前子地址数：0，是否确认继续下一步？</p>
+        <div class="actions">
+          <button id="confirmProceedCancel" class="btn secondary">取消</button>
+          <button id="confirmProceedOk" class="btn primary">确认</button>
+        </div>
+      </div>
+    </div>
+    <div id="actionModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog">
+        <h3 id="actionTitle">操作成功</h3>
+        <p id="actionText" class="tip">已完成本次操作</p>
+        <div class="actions">
+          <button id="actionCancelBtn" class="btn secondary hidden">取消</button>
+          <button id="actionOkBtn" class="btn primary">好的</button>
+        </div>
+      </div>
+    </div>
+    <div id="confirmGasModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog">
+        <h3 id="confirmGasTitle">确认兑换 Gas</h3>
+        <p id="confirmGasText" class="tip">将使用额外 PGC 兑换 Gas，确认继续？</p>
+        <div class="actions actions--split">
+          <button id="confirmGasCancel" class="btn secondary">取消</button>
+          <button id="confirmGasOk" class="btn primary">确认</button>
+        </div>
+      </div>
+    </div>
+    <div id="confirmDelModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog">
+        <h3>确认删除地址</h3>
+        <p id="confirmDelText" class="tip">是否删除该地址及其本地数据？</p>
+        <div class="actions">
+          <button id="confirmDelCancel" class="btn secondary">取消</button>
+          <button id="confirmDelOk" class="btn danger">删除</button>
+        </div>
+      </div>
+    </div>
+    <div id="addrModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog">
+        <h3 id="addrModalTitle">新建地址</h3>
+        <div id="addrCreateBox" class="result">
+          <p class="tip">确认新建一个子地址并加入当前账户。</p>
+        </div>
+        <div id="addrImportBox" class="result hidden">
+          <div class="form">
+            <div class="form-row"><label>私钥（Hex）</label><input id="addrPrivHex" class="input" type="text"
+                placeholder="请输入私钥 Hex" /></div>
+          </div>
+          <p id="addrError" class="tip tip--error hidden"></p>
+        </div>
+        <div class="actions actions--split">
+          <button id="addrCancelBtn" class="btn secondary">取消</button>
+          <button id="addrOkBtn" class="btn primary">确认</button>
+        </div>
+      </div>
+    </div>
+    <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="dialog" style="max-width: 600px; width: 90%;">
+        <h3 id="detailModalTitle">详细信息</h3>
+        <div id="detailModalContent" class="detail-content"></div>
+        <div class="actions">
+          <button id="detailModalClose" class="btn primary">关闭</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <small>前端使用 WebCrypto 生成 P-256 ECDSA 密钥并按 Go 逻辑派生地址与用户ID。</small>
+    </div>
+  </footer>
+
+  <script src="/app.js?v=20251123a"></script>
+</body>
+
+</html>
